@@ -291,8 +291,8 @@ class WinWebViewController {
       await WebviewWinFloatingPlatform.instance.loadUrl(_webviewId, url);
     } else {
       // For POST and other methods, use the postRequest method
-      await WebviewWinFloatingPlatform.instance.postRequest(
-          _webviewId, url, body ?? Uint8List(0)); // Pass Uint8List directly
+      await WebviewWinFloatingPlatform.instance.postRequest(_webviewId, url,
+          body ?? Uint8List(0), headers); // Pass Uint8List directly
     }
   }
 

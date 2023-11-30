@@ -11,6 +11,8 @@
 #include <wrl.h>
 #include <wil/com.h>
 
+#include "my_macros.h"
+
 using namespace Microsoft::WRL;
 
 std::string utf8_encode(const std::wstring& wstr)
@@ -325,41 +327,62 @@ HRESULT MyWebViewImpl::loadUrl(LPCWSTR url)
     return m_pWebview->Navigate(url);
 }
 
-HRESULT MyWebViewImpl::postRequest(LPCWSTR url, const std::map<std::wstring, std::wstring>& headers, const std::vector<uint8_t>& body) {
-    wil::com_ptr<ICoreWebView2Environment> environment;
-    HRESULT hr = m_pWebview->get_Environment(&environment);
-    if (FAILED(hr)) return hr;
+HRESULT MyWebViewImpl::postRequest(LPCWSTR url, const std::map<std::wstring, std::wstring>& headers, const std::vector<uint8_t>& body)
+{
+    // Convert body data to HGLOBAL
+    HGLOBAL hGlobal = GlobalAlloc(GMEM_MOVEABLE, body.size());
+    if (hGlobal)
+    {
+        void* p = GlobalLock(hGlobal);
+        memcpy(p, body.data(), body.size());
+        GlobalUnlock(hGlobal);
 
-    wil::com_ptr<ICoreWebView2WebResourceRequest> request;
-    hr = environment->CreateWebResourceRequest(url, L"POST", nullptr, nullptr, &request);
-    if (FAILED(hr)) return hr;
+        // Create IStream from HGLOBAL
+        IStream* pStream = NULL;
+        if (CreateStreamOnHGlobal(hGlobal, TRUE, &pStream) == S_OK)
+        {
+            // Query the ICoreWebView2Environment2 interface
+            wil::com_ptr<ICoreWebView2Environment2> webviewEnvironment2;
+            CHECK_FAILURE(g_env->QueryInterface(
+                IID_PPV_ARGS(&webviewEnvironment2)));
 
-    // Set headers
-    wil::com_ptr<ICoreWebView2HttpRequestHeaders> requestHeaders;
-    hr = request->get_Headers(&requestHeaders);
-    if (FAILED(hr)) return hr;
+            // Create a new WebResourceRequest
+            wil::com_ptr<ICoreWebView2WebResourceRequest> webResourceRequest;
+            CHECK_FAILURE(webviewEnvironment2->CreateWebResourceRequest(
+                url, L"POST", pStream,
+                L"Content-Type: application/x-www-form-urlencoded", &webResourceRequest));
 
-    for (const auto& header : headers) {
-        hr = requestHeaders->SetHeader(header.first.c_str(), header.second.c_str());
-        if (FAILED(hr)) return hr;
+            // Get the request headers
+            wil::com_ptr<ICoreWebView2HttpRequestHeaders> requestHeaders;
+            CHECK_FAILURE(webResourceRequest->get_Headers(&requestHeaders));
+
+            // Set each header
+            for (const auto& header : headers)
+            {
+                requestHeaders->SetHeader(header.first.c_str(), header.second.c_str());
+            }
+
+            // Query the ICoreWebView2_2 interface
+            wil::com_ptr<ICoreWebView2_2> webview2;
+            CHECK_FAILURE(m_pWebview->QueryInterface(IID_PPV_ARGS(&webview2)));
+
+            // Make the POST request
+            CHECK_FAILURE(webview2->NavigateWithWebResourceRequest(webResourceRequest.get()));
+
+            // Release the IStream
+            pStream->Release();
+        }
+        else
+        {
+            GlobalFree(hGlobal);
+        }
     }
 
-    // Set body
-    wil::com_ptr<IStream> stream;
-    hr = SHCreateStreamOnHGlobal(NULL, TRUE, &stream);
-    if (FAILED(hr)) return hr;
-
-    ULONG bytesWritten;
-    hr = stream->Write(body.data(), static_cast<ULONG>(body.size()), &bytesWritten);
-    if (FAILED(hr)) return hr;
-
-    hr = request->put_Content(stream.get());
-    if (FAILED(hr)) return hr;
-
-    // Send the request
-    hr = m_pWebview->NavigateWithWebResourceRequest(request.get());
-    return hr;
+    return S_OK;
 }
+
+
+
 
 HRESULT MyWebViewImpl::loadHtmlString(LPCWSTR html)
 {

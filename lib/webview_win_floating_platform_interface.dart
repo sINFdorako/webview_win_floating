@@ -50,7 +50,8 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
     throw UnimplementedError();
   }
 
-  Future<void> postRequest(int webviewId, String url, Uint8List postData) {
+  Future<void> postRequest(int webviewId, String url, Uint8List postData,
+      Map<String, String> headers) {
     throw UnimplementedError();
   }
 

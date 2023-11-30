@@ -150,7 +150,8 @@ class MockWebviewWinFloatingPlatform
   }
 
   @override
-  Future<void> postRequest(int webviewId, String url, Uint8List postData) {
+  Future<void> postRequest(int webviewId, String url, Uint8List postData,
+      Map<String, String> headers) {
     // TODO: implement postRequest
     throw UnimplementedError();
   }

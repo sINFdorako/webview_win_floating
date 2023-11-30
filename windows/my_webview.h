@@ -4,6 +4,7 @@
 #include <functional>
 
 #include <windows.h>
+#include <map>
 
 // NOTE (Jacky, 2022/11/03) :
 //		include "WebView2.h" twice, or include in two .cpp files, may cause compile error (keyword "interface" not defined)...
@@ -28,6 +29,7 @@ public:
 	virtual ~MyWebView() {};
 
 	virtual HRESULT loadUrl(LPCWSTR url) = 0;
+
 	virtual HRESULT postRequest(
     LPCWSTR url, 
     const std::map<std::wstring, std::wstring>& headers, 

@@ -102,10 +102,14 @@ class MethodChannelWebviewWinFloating extends WebviewWinFloatingPlatform {
   }
 
   @override
-  Future<void> postRequest(
-      int webviewId, String url, Uint8List postData) async {
-    await methodChannel.invokeMethod<bool>('postRequest',
-        {"webviewId": webviewId, "url": url, "postData": postData});
+  Future<void> postRequest(int webviewId, String url, Uint8List postData,
+      Map<String, String> headers) async {
+    await methodChannel.invokeMethod<bool>('postRequest', {
+      "webviewId": webviewId,
+      "url": url,
+      "postData": postData,
+      "headers": headers
+    });
   }
 
   @override

@@ -158,26 +158,40 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
     result->Success(flutter::EncodableValue(SUCCEEDED(hr)));
   }
   
-  // post request
-   else if (method_call.method_name().compare("postRequest") == 0) {
+// post request
+else if (method_call.method_name().compare("postRequest") == 0) {
     auto url = std::get<std::string>(arguments[flutter::EncodableValue("url")]);
 
-    // Retrieve postData as a byte array
-    const auto* byte_array = std::get_if<flutter::EncodableList>(arguments.find(flutter::EncodableValue("postData"))->second);
+    // Initialize postData as an empty vector
     std::vector<uint8_t> postData;
-    if (byte_array) {
-        for (auto& val : *byte_array) {
+
+    // Find the postData in the arguments
+    auto postDataIt = arguments.find(flutter::EncodableValue("postData"));
+    if (postDataIt != arguments.end()) {
+        const auto& byte_array = std::get<flutter::EncodableList>(postDataIt->second);
+        for (const auto& val : byte_array) {
             auto byte_val = std::get<int32_t>(val);
             postData.push_back(static_cast<uint8_t>(byte_val));
         }
     }
 
-    auto hr = webview->postRequest(toWideString(url), postData);
-    result->Success(flutter::EncodableValue(SUCCEEDED(hr)));
-}
+    // Initialize headers as an empty map
+    std::map<std::wstring, std::wstring> headers;
 
-  
-  
+    // Find the headers in the arguments
+    auto headersIt = arguments.find(flutter::EncodableValue("headers"));
+    if (headersIt != arguments.end()) {
+        const auto& headersMap = std::get<flutter::EncodableMap>(headersIt->second);
+        for (const auto& pair : headersMap) {
+            auto key = std::get<std::string>(pair.first);
+            auto value = std::get<std::string>(pair.second);
+            headers[toWideString(key)] = toWideString(value);
+        }
+    }
+
+    auto hr = webview->postRequest(toWideString(url), headers, postData);
+    result->Success(flutter::EncodableValue(SUCCEEDED(hr)));
+}  
   else if (method_call.method_name().compare("loadHtmlString") == 0) {
     auto html = std::get<std::string>(arguments[flutter::EncodableValue("html")]);
     auto hr = webview->loadHtmlString(toWideString(html));
