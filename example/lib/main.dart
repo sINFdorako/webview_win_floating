@@ -32,20 +32,12 @@ class _MyAppState extends State<MyApp> {
     controller!.setJavaScriptMode(JavaScriptMode.unrestricted);
     controller!.setBackgroundColor(Colors.cyanAccent);
     controller!.setNavigationDelegate(NavigationDelegate(
-      onNavigationRequest: (request) {
-        if (request.url.startsWith("https://www.youtube.com")) {
-          return NavigationDecision.navigate;
-        } else {
-          log("prevent user navigate out of google website!");
-          return NavigationDecision.prevent;
-        }
-      },
       onPageStarted: (url) => print("onPageStarted: $url"),
       onPageFinished: (url) => print("onPageFinished: $url"),
       onWebResourceError: (error) =>
           print("onWebResourceError: ${error.description}"),
     ));
-    controller!.loadRequest(Uri.parse("https://www.youtube.com/"));
+    controller!.loadRequest(Uri.parse("https://www.linkedin.com/"));
 
     isShown = true;
   }

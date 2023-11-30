@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -133,7 +134,8 @@ class MockWebviewWinFloatingPlatform
   }
 
   @override
-  Future<bool> create(int webviewId, {String? initialUrl, String? userDataFolder}) {
+  Future<bool> create(int webviewId,
+      {String? initialUrl, String? userDataFolder}) {
     throw UnimplementedError();
   }
 
@@ -144,6 +146,12 @@ class MockWebviewWinFloatingPlatform
 
   @override
   Future<void> suspend(int webviewId) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> postRequest(int webviewId, String url, Uint8List postData) {
+    // TODO: implement postRequest
     throw UnimplementedError();
   }
 }

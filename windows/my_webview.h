@@ -28,6 +28,11 @@ public:
 	virtual ~MyWebView() {};
 
 	virtual HRESULT loadUrl(LPCWSTR url) = 0;
+	virtual HRESULT postRequest(
+    LPCWSTR url, 
+    const std::map<std::wstring, std::wstring>& headers, 
+    const std::vector<uint8_t>& body) = 0;
+
 	virtual HRESULT loadHtmlString(LPCWSTR html) = 0;
 	virtual HRESULT runJavascript(LPCWSTR javaScriptString, bool ignoreResult = true, std::function<void(std::string)> callback = NULL) = 0;
 

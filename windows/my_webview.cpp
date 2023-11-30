@@ -52,6 +52,8 @@ public:
     virtual ~MyWebViewImpl() override;
 
     HRESULT loadUrl(PCWSTR url);
+   HRESULT postRequest(LPCWSTR url, const std::map<std::wstring, std::wstring>& headers, const std::vector<uint8_t>& body) override;
+
     HRESULT loadHtmlString(PCWSTR html);
     HRESULT runJavascript(PCWSTR javaScriptString, bool ignoreResult, std::function<void(std::string)> callback);
 
@@ -321,6 +323,42 @@ HRESULT MyWebViewImpl::loadUrl(LPCWSTR url)
 {
     nowLoadingUrl = url;
     return m_pWebview->Navigate(url);
+}
+
+HRESULT MyWebViewImpl::postRequest(LPCWSTR url, const std::map<std::wstring, std::wstring>& headers, const std::vector<uint8_t>& body) {
+    wil::com_ptr<ICoreWebView2Environment> environment;
+    HRESULT hr = m_pWebview->get_Environment(&environment);
+    if (FAILED(hr)) return hr;
+
+    wil::com_ptr<ICoreWebView2WebResourceRequest> request;
+    hr = environment->CreateWebResourceRequest(url, L"POST", nullptr, nullptr, &request);
+    if (FAILED(hr)) return hr;
+
+    // Set headers
+    wil::com_ptr<ICoreWebView2HttpRequestHeaders> requestHeaders;
+    hr = request->get_Headers(&requestHeaders);
+    if (FAILED(hr)) return hr;
+
+    for (const auto& header : headers) {
+        hr = requestHeaders->SetHeader(header.first.c_str(), header.second.c_str());
+        if (FAILED(hr)) return hr;
+    }
+
+    // Set body
+    wil::com_ptr<IStream> stream;
+    hr = SHCreateStreamOnHGlobal(NULL, TRUE, &stream);
+    if (FAILED(hr)) return hr;
+
+    ULONG bytesWritten;
+    hr = stream->Write(body.data(), static_cast<ULONG>(body.size()), &bytesWritten);
+    if (FAILED(hr)) return hr;
+
+    hr = request->put_Content(stream.get());
+    if (FAILED(hr)) return hr;
+
+    // Send the request
+    hr = m_pWebview->NavigateWithWebResourceRequest(request.get());
+    return hr;
 }
 
 HRESULT MyWebViewImpl::loadHtmlString(LPCWSTR html)

@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
@@ -46,6 +47,10 @@ abstract class WebviewWinFloatingPlatform extends PlatformInterface {
   }
 
   Future<void> loadUrl(int webviewId, String url) {
+    throw UnimplementedError();
+  }
+
+  Future<void> postRequest(int webviewId, String url, Uint8List postData) {
     throw UnimplementedError();
   }
 

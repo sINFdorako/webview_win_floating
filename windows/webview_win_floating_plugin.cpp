@@ -156,7 +156,29 @@ void WebviewWinFloatingPlugin::HandleMethodCall(
     auto url = std::get<std::string>(arguments[flutter::EncodableValue("url")]);
     auto hr = webview->loadUrl(toWideString(url));
     result->Success(flutter::EncodableValue(SUCCEEDED(hr)));
-  } else if (method_call.method_name().compare("loadHtmlString") == 0) {
+  }
+  
+  // post request
+   else if (method_call.method_name().compare("postRequest") == 0) {
+    auto url = std::get<std::string>(arguments[flutter::EncodableValue("url")]);
+
+    // Retrieve postData as a byte array
+    const auto* byte_array = std::get_if<flutter::EncodableList>(arguments.find(flutter::EncodableValue("postData"))->second);
+    std::vector<uint8_t> postData;
+    if (byte_array) {
+        for (auto& val : *byte_array) {
+            auto byte_val = std::get<int32_t>(val);
+            postData.push_back(static_cast<uint8_t>(byte_val));
+        }
+    }
+
+    auto hr = webview->postRequest(toWideString(url), postData);
+    result->Success(flutter::EncodableValue(SUCCEEDED(hr)));
+}
+
+  
+  
+  else if (method_call.method_name().compare("loadHtmlString") == 0) {
     auto html = std::get<std::string>(arguments[flutter::EncodableValue("html")]);
     auto hr = webview->loadHtmlString(toWideString(html));
     result->Success(flutter::EncodableValue(SUCCEEDED(hr)));

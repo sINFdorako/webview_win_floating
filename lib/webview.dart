@@ -284,11 +284,42 @@ class WinWebViewController {
       {LoadRequestMethod method = LoadRequestMethod.get,
       Map<String, String> headers = const <String, String>{},
       Uint8List? body}) async {
-    if (method != LoadRequestMethod.get || headers.isNotEmpty || body != null) {
-      log("[webview_win_floating] loadRequest() doesn't support headers / body / post / update / delete");
-    }
     await _initFuture;
-    await WebviewWinFloatingPlatform.instance.loadUrl(_webviewId, url);
+
+    if (method == LoadRequestMethod.get) {
+      // For GET requests, use the existing loadUrl method
+      await WebviewWinFloatingPlatform.instance.loadUrl(_webviewId, url);
+    } else {
+      // For POST and other methods, use the postRequest method
+      await WebviewWinFloatingPlatform.instance.postRequest(
+          _webviewId, url, body ?? Uint8List(0)); // Pass Uint8List directly
+    }
+  }
+
+  String createJavaScriptForRequest(String url, LoadRequestMethod method,
+      Map<String, String> headers, Uint8List? body) {
+    // Convert headers and body to a JavaScript-friendly format
+    String headerStr =
+        headers.entries.map((e) => "'${e.key}': '${e.value}'").join(', ');
+    String bodyStr = body != null ? String.fromCharCodes(body) : "null";
+
+    // Create the JavaScript code for the request
+    return """
+    (function() {
+      fetch('$url', {
+        method: '${method.toString().split('.').last.toUpperCase()}',
+        headers: {$headerStr},
+        body: $bodyStr
+      }).then(response => {
+        return response.text();
+      }).then(data => {
+        // Handle the response data
+        console.log(data);
+      }).catch(error => {
+        console.error('Error:', error);
+      });
+    })();
+  """;
   }
 
   Future<void> loadHtmlString(String html) async {
